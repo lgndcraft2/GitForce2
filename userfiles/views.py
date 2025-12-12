@@ -14,6 +14,8 @@ from twilio.twiml.messaging_response import MessagingResponse
 
 from rest_framework.permissions import IsAuthenticated
 
+# genai.configure(api_key=settings.GOOGLE_API_KEY)
+
 # Create your views here.
 def index(request):
     return HttpResponse("Hello, world. You're at the userfiles index.")
@@ -140,7 +142,78 @@ class WhatsAppBotView(APIView):
         # 5. Return XML (Critical for Twilio)
         # We use standard HttpResponse because DRF's Response() returns JSON
         return HttpResponse(str(resp), content_type='text/xml')
-    
+
+# 1. LIST (Get All) and CREATE (Post New)
+class CropListCreateView(generics.ListCreateAPIView):
+    queryset = SavedFile.objects.all().order_by('-timestamp')
+    serializer_class = CropDataSerializer
+    permission_classes = [AllowAny]  # 🔓 Open access
+
+# 2. RETRIEVE (Get One), UPDATE (Put), and DESTROY (Delete)
+class CropDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = SavedFile.objects.all()
+    serializer_class = CropDataSerializer
+    permission_classes = [AllowAny]  # 🔓 Open access
+'''
+class AIAnalysisView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser] # Allows file uploads
+
+    def post(self, request, *args, **kwargs):
+        serializer = AIAnalysisSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            # 1. Get the image from request
+            image_file = request.FILES['image']
+            
+            # 2. Open image with Pillow so Gemini can read it
+            img = Image.open(image_file)
+
+            # 3. Define the Prompt for Gemini
+            # We ask for JSON so we can easily parse it
+            prompt = """
+            Analyze this plant image. Identify the crop, detect any diseases or nutrient deficiencies.
+            Return ONLY a raw JSON string (no markdown) with this format:
+            {
+                "crop_name": "Name of crop",
+                "top_class": "Healthy or Name of Disease",
+                "confidence": "Confidence percentage (e.g. 98%)",
+                "recommendation": "Short advice"
+            }
+            """
+
+            try:
+                # 4. Call Gemini Model
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                response = model.generate_content([prompt, img])
+                
+                # 5. Parse the AI Response
+                import json
+                # Clean up response text just in case Gemini adds ```json markdown
+                cleaned_text = response.text.replace('```json', '').replace('```', '').strip()
+                ai_data = json.loads(cleaned_text)
+
+                # 6. Save to Database
+                # Note: We are saving the filename as 'file_data' to match your model
+                saved_record = SavedFile.objects.create(
+                    user=request.user,
+                    # file_data=image_file.name, 
+                    crop_name=ai_data.get('crop_name', 'Unknown'),
+                    top_class=ai_data.get('top_class', 'Unknown'),
+                    confidence=ai_data.get('confidence', '0%')
+                )
+
+                # 7. Return Result to Frontend
+                return Response({
+                    "message": "Analysis Complete",
+                    "data": ai_data,
+                    "record_id": saved_record.id
+                }, status=status.HTTP_201_CREATED)
+
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)'''
 
 class FirebaseSyncView(generics.GenericAPIView):
     permission_classes = [AllowAny] # Public, because the user isn't in Django yet

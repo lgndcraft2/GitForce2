@@ -11,7 +11,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 class SavedFileSerailizer(serializers.ModelSerializer):
     class Meta:
         model = SavedFile
-        fields = ['user', 'confidence', 'crop_name', 'top_class', 'file_data', 'timestamp']
+        fields = ['user', 'confidence', 'crop_name', 'top_class', 'timestamp']
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -51,7 +51,7 @@ class SavedFileSerializer(serializers.ModelSerializer):
         model = SavedFile
         # We include 'user' in fields so we can see it in responses,
         # but read_only=True ensures we don't need to send it in POST requests.
-        fields = ['id', 'user', 'confidence', 'crop_name', 'top_class', 'file_data', 'timestamp']
+        fields = ['id', 'user', 'confidence', 'crop_name', 'top_class', 'timestamp']
         read_only_fields = [ 'timestamp']
 
 
@@ -59,3 +59,21 @@ class FirebaseUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'full_name', 'farm_location']
+
+class AIAnalysisSerializer(serializers.ModelSerializer):
+    # Input: The actual image file
+    image = serializers.ImageField(write_only=True)
+
+    class Meta:
+        model = SavedFile
+        # We only ask the user for the 'image'
+        # The AI will fill in 'confidence', 'crop_name', etc.
+        fields = ['id', 'user', 'image', 'confidence', 'crop_name', 'top_class', 'timestamp']
+        read_only_fields = ['id', 'user', 'confidence', 'crop_name', 'top_class', 'timestamp']
+
+class CropDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SavedFile
+        # We include 'user' here so you can manually assign it if you want (e.g., "user": 1)
+        fields = ['uid', 'crop_name', 'confidence', 'top_class', 'timestamp']
+

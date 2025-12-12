@@ -11,11 +11,15 @@ from rest_framework_simplejwt.views import (
 urlpatterns = [
     path('', index, name='index'),
     path('', UserProfileView.as_view(), name='send_info'),  
+
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
     path('api-auth/', include('rest_framework.urls')),
     path('whatsapp/', WhatsAppBotView.as_view(), name='whatsapp-bot'),
-    path('farmer/onboard/', CreateFarmerView.as_view(), name='farmer-onboard'),
+
+    path('farmer/onboard/', CreateFarmerView.as_view(), name='farmer-onboard'), # out
+
     path('login/', LoginView.as_view(), name='login'),
     path('register/', RegisterView.as_view(), name='register'),
 
@@ -27,6 +31,14 @@ urlpatterns = [
     path('api/my-files/', UserFilesListView.as_view(), name='my-files'),
 
     path('api/auth/firebase-sync/', FirebaseSyncView.as_view(), name='firebase_sync'),
+
+    # path('api/analyze/', AIAnalysisView.as_view(), name='analyze_plant'),
+
+    # Endpoint for Listing all crops or Adding a new one
+    path('api/crops/', CropListCreateView.as_view(), name='crop-list-create'),
+
+    # Endpoint for modifying/deleting a SPECIFIC crop (by ID)
+    path('api/crops/<int:pk>/', CropDetailView.as_view(), name='crop-detail'),
 ]
 
 
