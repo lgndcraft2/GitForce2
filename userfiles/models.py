@@ -21,7 +21,7 @@ class CustomUser(AbstractUser):
         }
 
 class SavedFile(models.Model):
-    uid = models.IntegerField(unique=True)
+    uid = models.CharField(unique=True)
     confidence = models.CharField(max_length=255)
     crop_name = models.CharField(max_length=255)
     top_class = models.CharField(max_length=255)
