@@ -11,15 +11,60 @@ from rest_framework.views import APIView
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny
 from twilio.twiml.messaging_response import MessagingResponse
+
+from rest_framework.permissions import IsAuthenticated
+
 # Create your views here.
 def index(request):
     return HttpResponse("Hello, world. You're at the userfiles index.")
 
 class UserProfileView(generics.RetrieveAPIView):
     queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer  
+    serializer_class = CustomUserSerializer
+    permission_classes = [IsAuthenticated]
 
-    
+    def get(self, request, *args, **kwargs):
+        """
+        GET user profile by Firebase UID passed in query params
+        Example: /sendinfo/?uid=abc123
+        """
+        uid = request.query_params.get('uid')
+        if not uid:
+            return Response({"error": "UID parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = CustomUser.objects.get(uid=uid)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        """
+        POST user profile by Firebase UID in JSON body
+        """
+        uid = request.data.get('uid')
+        if not uid:
+            return Response({"error": "UID parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = CustomUser.objects.get(uid=uid)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(user)
+        return Response(serializer.data)
+
+
+class CreateFarmerView(generics.CreateAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        # Save user normally; no .user foreign key needed
+        serializer.save()
 
 class WhatsAppBotView(APIView):
     # Twilio sends data as form-encoded, so we need these parsers
