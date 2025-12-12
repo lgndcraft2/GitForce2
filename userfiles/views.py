@@ -141,7 +141,9 @@ class WhatsAppBotView(APIView):
 
                 # 4. Generate Content
                 # We pass the prompt AND the image data
-                response = model.generate_content([prompt, image])
+                response = model.generate_content([prompt, {
+                    "mime_type": "image/jpeg", "data": img_data
+                }])
 
                 ai_analysis = response.text
                 print(f"🧠 Gemini Says: {ai_analysis}")
