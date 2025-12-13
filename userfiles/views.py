@@ -123,7 +123,20 @@ class WhatsAppBotView(APIView):
                 # 1. Download the image from Twilio
                 # Twilio URLs sometimes require auth, but usually public in sandbox.
                 # If it fails, we might need basic auth (Account SID + Token)
-                img_data = requests.get(image_url).content
+                # We need these to unlock the image from Twilio
+                tw_sid = os.getenv("TWILIO_ACCOUNT_SID")
+                tw_token = os.getenv("TWILIO_AUTH_TOKEN")
+                
+                # 1. Download the image WITH AUTHENTICATION
+                # This fixes the 400 error because now we get the real image, not a login page
+                image_response = requests.get(image_url, auth=(tw_sid, tw_token))
+                
+                # Check if download actually worked
+                if image_response.status_code != 200:
+                    print(f"❌ Twilio Download Failed: {image_response.status_code}")
+                    raise Exception("Could not download image from Twilio")
+                    
+                img_data = image_response.content
 
                 # 2. Setup Gemini Model (Use Flash for speed!)
                 model = genai.GenerativeModel('gemini-2.5-flash')
